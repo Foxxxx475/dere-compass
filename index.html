@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Dere Compass</title>
+<style>
+:root{--bg:#fff5f8;--card:#fff;--ink:#2a1f2d;--mute:#7a6a80;--acc:#e0457b;--acc2:#7c5cff;--line:#ecd9e2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17111c;--card:#241a2b;--ink:#f6eaf3;--mute:#a893b3;--acc:#ff6fa3;--acc2:#a590ff;--line:#3a2b45}}
+:root[data-theme="dark"]{--bg:#17111c;--card:#241a2b;--ink:#f6eaf3;--mute:#a893b3;--acc:#ff6fa3;--acc2:#a590ff;--line:#3a2b45}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+#app{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:28px;margin:8px 0 4px;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mute);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px}
+button{font:inherit;cursor:pointer}
+.go{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:10px 16px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .3s}
+.q{font-size:20px;font-weight:600;margin:12px 0 20px;min-height:84px}
+.opts{display:grid;gap:8px}
+.opts button{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:12px;text-align:left}
+.opts button:active,.opts button.on{border-color:var(--acc);background:var(--line)}
+.meta{display:flex;justify-content:space-between;color:var(--mute);font-size:13px;margin-top:14px}
+.big{font-size:34px;font-weight:800;margin:0}
+.tag{color:var(--acc);font-weight:600;margin:0 0 8px}
+.ax{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;align-items:center;font-size:13px;color:var(--mute);margin-top:12px}
+.ax div.t{height:8px;background:var(--line);border-radius:4px;position:relative}
+.ax div.t b{position:absolute;top:-2px;width:12px;height:12px;border-radius:50%;background:var(--acc);margin-left:-6px}
+.run{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)}
+svg{width:100%;height:auto;display:block}
+details{border-top:1px solid var(--line);padding:10px 0}
+summary{font-weight:600;cursor:pointer}
+details p{margin:6px 0 0;color:var(--mute);font-size:14px}
+</style></head>
+<body><div id="app"></div>
+<script>
+const AX=['Expression','Warmth','Intensity','Pride','Energy','Duality','Flirtation','Melancholy','Aggression','Neediness'];
+const LO=['Reserved','Cold','Calm','Humble','Sluggish','Consistent','Platonic','Sunny','Peaceful','Independent'],HI=['Expressive','Warm','Intense','Royal','Lively','Hidden side','Flirty','Gloomy','Combative','Clingy'];
+const QA=[
+[["If I like someone, they'll know within a week.",1],["I'd rather write a note than say how I feel to someone's face.",-1],["My face shows exactly what I'm feeling.",1],["I go silent when emotions get strong.",-1],["I call things out directly instead of hinting.",1],["I show care through small actions, not words.",-1]],
+[["I'm kind to people, even those I barely know.",1],["My default tone with most people is sharp or distant.",-1],["I'd happily share my lunch with a stranger.",1],["When someone compliments me, I deflect or snap back.",-1],["I feel better when everyone around me is happy.",1],["I find it very hard to admit I like someone.",-1]],
+[["If someone hurt the person I love, I'd lose it.",1],["Most conflicts aren't worth my energy.",-1],["I think about the people I love constantly.",1],["I rarely get jealous.",-1],["I've done something dramatic out of love or anger.",1],["I stay level-headed in a crisis.",-1]],
+[["I expect people to give me special treatment.",1],["I often feel I don't deserve attention.",-1],["I secretly think I'm better than most people around me.",1],["I get flustered when people praise me.",-1],["I want my partner to treat me like royalty.",1],["I'd happily put someone I love above myself.",-1]],
+[["I'm usually bouncing with energy.",1],["My ideal weekend involves not moving.",-1],["I jump into new things without hesitation.",1],["I tire easily and need lots of rest.",-1],["I'm the one who gets the group moving.",1],["I say 'whatever' a lot and mean it.",-1]],
+[["There's a side of me almost nobody sees.",1],["What you see of me is what you get.",-1],["I act tougher or cooler than I feel inside.",1],["I never pretend to feel something I don't.",-1],["I'm very different with someone I trust.",1],["I behave the same around everyone.",-1]],
+[["I flirt without even thinking about it.",1],["Romantic or suggestive jokes make me uncomfortable.",-1],["I enjoy being a little scandalous.",1],["I keep things strictly proper with people I like.",-1],["I'm touchy and physically affectionate with people I like.",1]],
+[["Even on good days, a quiet sadness follows me around.",1],["I bounce back from bad moods fast.",-1],["I feel things deeply and linger on them.",1],["I rarely feel down.",-1],["I'm drawn to dark or sad stories and moods.",1]],
+[["I've punched, shoved or thrown something when flustered.",1],["I avoid physical fights at all costs.",-1],["When pushed, I escalate instead of backing down.",1],["I'd rather walk away than fight.",-1],["I threaten people (jokingly or not) when I'm embarrassed.",1]],
+[["I hate being apart from the people I love.",1],["I'm happiest doing things on my own.",-1],["I love being pampered and doted on.",1],["I rarely ask anyone for help.",-1],["I get clingy when I'm anxious.",1]]];
+const Q=[];for(let k=0;k<6;k++)for(let a=0;a<10;a++)if(QA[a][k])Q.push([QA[a][k][0],a,QA[a][k][1]]);
+const L=["Not me at all","Not really","Sometimes","Pretty much","Totally me"];
+// [expression, warmth, intensity, pride]
+const T=`Deredere|Wears their heart on their sleeve|Lovestruck, openly affectionate and optimistic from the start. No mask at all.|995380
+Tsundere|Hot and cold|Harsh or prickly (tsuntsun) at first, then a loving side shows over time. The original dere type.|656779
+Yandere (Yanderu)|Sweet until threatened|So lovestruck they become unstable, swinging between sweet and violent when the relationship feels at risk.|779568
+Kuudere|Cool and collected|Expressionless and unapproachable at first glance, but warms up around their love interest.|233648
+Dandere|Quiet until safe|Silent and shy most of the time, then suddenly talkative and cute alone with their love interest.|163237
+Himedere|Princess energy|Wants to be treated like royalty, even without a crown. Proud and entitled.|754963
+Kamidere|God complex|Like a himedere but grander. Acts divine, which makes conflicts bigger.|637963
+Bakadere|Lovable airhead|Lacks good judgement and acts foolish, but is sweet and sometimes doting.|884182
+Biridere|Bold and flashy|A bold, showy type with a thinly documented wiki page.|856686
+Bokodere|Shows love with fists|Expresses affection through punches and slaps.|758485
+Butsudere|Pure and serene|Pure, kind and serene, with a Buddhist-style calm.|482341
+Darudere|Too lazy to care|Lazy and disinterested, even toward their love interest, but still shows emotion.|440404
+Dorodere|Messy and scheming|Muddy motives and tangled situations, with a dark side behind the charm.|536659
+Erodere|Lewd and shameless|Flirty, lewd and openly suggestive.|976682
+Gandere|Stubborn and tough|Hard-headed and stubborn.|545765
+Goudere|Puts you on a pedestal|Idolizes their love interest and goes to extreme lengths to please them.|698173
+Gundere|Military bearing|Disciplined and command-like, with a soldier's manner.|435666
+Hajidere|Blushing mess|Easily embarrassed and nervous around their love interest.|364154
+Hinedere|Twisted and contrary|Sarcastic and contrary, bending every compliment into a jab.|534657
+Kichidere|Unhinged|Wild and unpredictable. A thinly documented type.|758586
+Kiridere|Sharp in public, soft in private|Dignified and serious in public, then suddenly affectionate when alone with their love interest.|343759
+M Dere|Takes the hits|Masochistic. Enjoys teasing or punishment from their love interest.|666164
+Nyandere|Cat-like cuddler|Openly affectionate in a cat-like way: rubbing, head pats, purring.|894371
+Onidere|Fierce as a demon|Fierce and demon-like, with intense force behind their feelings.|637775
+Rindere|Dignified and composed|Poised, dignified and composed.|343756
+Roshidere|Slips into Russian|Voices or hides affection in Russian.|343659
+S Dere|Teases the one they love|Sadistic streak. Enjoys teasing or tormenting their love interest.|747676
+Shindere|Ghostly|Deathly or ghostly, like a spirit who loves.|364335
+Shundere|Wistful and lonely|Sad, dejected and lonely.|363436
+Tsuyodere|Strong and tough|Tough, strong-willed and hard to knock down.|556775
+Undere|The first dere|Predates tsundere. The first compound with dere, from a 1905 novel.|562444
+Usodere|Compulsive liar|Lies about their feelings, or everything else.|645569
+Utsudere|Depressed and heavy|Weighed down by low moods and low energy.|254216
+Uzadere|Annoyingly clingy|Clingy and overbearing to the point of annoyance.|866382
+Wandere|Loyal like a dog|Loyal and eager like a puppy, always at your heels.|895291
+Yandere (Yankii)|Delinquent turned soft|A loud, brawling delinquent who falls in love and turns deredere.|748688
+Yoidere|Affectionate when drunk|Open and cuddly because they're drunk. Affection and drunkenness at the same time.|993371
+Zondere|Undead and affectionate|A zombie-themed type who is undead but still lovestruck.|365226
+Deretsun|Sweet, then sour|Starts deredere, then develops an unfriendly gap over time.|765568
+Tsun-Aho|Prickly airhead|A tsundere with an airheaded streak.|754277
+Tsun-Ama|Prickly but sweet|A tsundere whose sweet side shows early.|664467
+Tsunbaka|Prickly fool|A tsundere who is also foolish and goofy.|755378
+Tsundora|Prickly dragon|A tsundere with a dragon's fire and pride.|647878
+Tsunneko|Prickly cat|A tsundere with cat-like behavior.|655678
+Tsun-Pure|Prickly and pure|A tsundere with an innocent, pure core.|574368
+Tsunpuri|Prickly pouter|A tsundere who pouts when flustered.|654568
+Tsunshun|Prickly and downcast|A tsundere with a sad, dejected mood.|444438
+Tsuntere|Prickly and bashful|A tsundere who is also shy and embarrassed.|564358
+Buchigire|Explodes in rage|Snaps and goes berserk.|839595
+Majigire|Seriously snapped|Rage that is deadly serious when it hits.|739685
+Tsungire|Tsundere who snaps|Looks like a tsundere, but the hostility tips into rage instead of softening.|739488
+Yangire|Snaps with menace|Snaps with a menacing, unstable edge.|829586
+Bocchandere|Pampered rich kid|A pampered rich young master.|754864
+Byoukidere|Gentle and fragile|Sickly, often hospitalized, but kind and gentle.|382303
+Kanedere|Loves the money|Their affection is wrapped up in wealth.|645767
+Kekkondere|Marriage-minded|Fixated on marriage and committed from the start.|787572
+Nemuidere|Sleepy and cuddly|Drowsy, soft and constantly ready for a nap.|361303
+Oujidere|Prince energy|The male version of himedere. Wants to be treated like royalty.|654964
+Oujodere|Princess energy|A regal princess type who expects to be adored.|763963
+Smugdere|Smirking and smug|Smug and self-satisfied, with confidence on display.|744865
+Teasedere|Teases because they love you|Playful teasing as their love language.|865583
+Thugdere|Tough guy, soft heart|A rough exterior that hides a soft, caring side.|556668
+Ahodere|Sweet airhead|Cheerful, silly and openly affectionate.|883282
+Kamidere (Western)|Arrogance on full display|The Western take on the god complex. Proud and lofty.|636953
+Mayadere|The villain-dere|Dark and cold, often a villain, who softens for one person.|326657
+Megadere|Over-the-top fangirl|Openly loving the whole time, in a big fangirl way.|997390
+Amadere|Spoiled and clingy|Pampered and dependent, leaning hard on their love interest.|774552
+Gesudere|Scum with a heart|A scoundrel who is still capable of love.|626767
+Gurodere|Gory affection|Obsessed with the gruesome, and sweet about it.|649566
+Kiredere|Short fuse, sweet core|Explosive temper, sweet at heart.|748587
+Kurodere|Dark side|A dark side that only lightens for one person.|437659
+Kuzudere|Lovable trash|A lazy, good-for-nothing type who is still loved.|543315
+Ojoudere|Refined lady|A refined, well-bred young lady.|563853
+Shittodere|Jealous and clingy|Jealousy is their love language.|668465
+Teredere|Bashful and flustered|Blushes, fidgets and flusters when touched by affection.|363254
+Sunao Cool|Honest and cool|Honest about their feelings in a calm, cool way.|553440
+Sunao Heat|Honest and fiery|Honest about their feelings in a loud, fiery way.|977490
+Sunao Surreal|Honest and strange|Honest about their feelings in an odd, surreal way.|653360
+Kamidere (Bite)|Bites back|A fierce, biting take on the god complex.|738875
+Sadodere|Sadistic and sweet|Sadistic plus deredere. Teases and torments the people they like.|867572
+Inudere|Puppy-like devotion|An unofficial type devoted like a dog.|885391
+Kakkodere|Cool and handsome|An unofficial type who plays it cool and stylish.|443755`.trim().split('\n').map(l=>{const[n,g,d,c]=l.split('|');return[n,g,d,[...c].map(x=>(x-4.5)/4.5)]});
+const X=`5006 4365 5599 2423 2415 5147 4264 4127 8154 4294 1403 2516 6464 9135 2362 4238 2372 3316 3643 6485 2323 7318 6118 3383 2332 2423 7274 2825 2916 3272 3623 4434 1915 5339 4119 4395 6218 3745 5456 4255 4257 4265 4384 5356 2345 4456 3755 3355 3494 3494 3495 3595 5248 2707 5336 6128 3408 5136 5136 6133 7135 4363 4017 4254 4673 6019 5329 5564 4694 4385 4773 3626 3234 5569 3226 3213 6035 4224 4284 7375 4119 3322`.split(' ');
+const C=`RK TV RV D S AP A K LT V K D D L D RK D S DT V D LP RP V D D TLV M M V K D M P KR V RL M T T TP T TV TP TS TP TM TS V V TV V PA MK AP R P AP AP AT T DV K A DA R P AD V V DV D A RV S D R K AV TLV RK D`.split(' ');
+T.forEach((t,k)=>{t[3].push(...[...X[k]].map(c=>(c-4.5)/4.5));t[4]=C[k]});
+const CN={A:'Arrogant',D:'Distant',K:'Kind',L:'Lewd',M:'Melancholic',R:'Romantic',S:'Shy',P:'Spoiled',T:'Teasing',V:'Violent'};
+const CD={A:'carry their pride like a crown',D:'keep their distance',K:'radiate kindness',L:'flirt without shame',M:'live with a quiet sadness',R:'love loudly and romantically',S:'blush and hide',P:'want to be pampered',T:'tease the ones they like',V:'lash out when feelings run hot'};
+const PH=[['wears their feelings openly','keeps their feelings locked down'],['is warm to nearly everyone','stays cool and guarded'],['loves at full volume','keeps things low-key and calm'],['carries themselves like royalty','stays humble and self-effacing'],['runs on boundless energy','moves at their own slow pace'],['has a hidden side only trusted people see','is the same inside and out'],['flirts shamelessly','keeps things strictly proper'],['carries a quiet sadness','stays sunny and light'],['lashes out when pushed','avoids physical conflict'],['clings to the people they love','stands fully on their own']];
+const SS=[['bold','mute'],['sun','ice'],['fire','mild'],['crown','meek'],['zap','nap'],['mask','plain'],['flirt','prim'],['blue','glow'],['rage','calm'],['cling','solo']];
+const app=document.getElementById('app');
+let i=-1,ans=[];
+const esc=s=>s.replace(/</g,'&lt;');
+function start(){i=-1;ans=[];render()}
+function render(){
+ if(i<0){app.innerHTML=`<h1>The Dere Compass</h1><p class="sub">56 questions. 10 axes. 82 dere types across the wiki's 10 categories. Find where you land.</p>
+ <div class="card"><p>Answer honestly about how you act with people you care about. Your answers plot you on a compass of <b>Expression</b> and <b>Warmth</b>, while eight more axes (Intensity, Pride, Energy, Duality, Flirtation, Melancholy, Aggression, Neediness) pick your exact type. If you land between two categories, or fit none, we invent a new one for you.</p><button class="go" onclick="i=0;render()">Begin</button></div>
+ <div class="card">${T.map(t=>`<details><summary>${t[0]} <span style="color:var(--mute);font-weight:400">· ${t[1]}</span></summary><p>${esc(t[2])} <i>(${[...t[4]].map(c=>CN[c]).join(', ')})</i></p></details>`).join('')}</div>`;return}
+ if(i>=Q.length)return result();
+ app.innerHTML=`<div class="bar"><i style="width:${i/Q.length*100}%"></i></div><div class="card"><div class="meta"><span>${i+1} / ${Q.length}</span><span>${AX[Q[i][1]]}</span></div><div class="q">${Q[i][0]}</div>
+ <div class="opts">${L.map((l,k)=>`<button class="${ans[i]===k?'on':''}" onclick="pick(${k})">${l}</button>`).join('')}</div>
+ <div class="meta"><button class="ghost" onclick="back()">Back</button></div></div>`}
+function pick(k){ans[i]=k;i++;render()}
+function back(){if(i>0){i--;render()}else{i=-1;render()}}
+function score(){const s=Array(10).fill(0),n=Array(10).fill(0);
+ Q.forEach((q,k)=>{s[q[1]]+=(ans[k]-2)/2*q[2];n[q[1]]++});return s.map((v,k)=>v/n[k])}
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+const stem=n=>{const s=n.toLowerCase().split(/[ \-(]/)[0].replace(/(dere|gire)$/,'');return{m:'maso',s:'sado'}[s]||s};
+const dist=(a,b)=>Math.sqrt(a.reduce((x,y,k)=>x+(y-b[k])**2,0));
+function result(){
+ const v=score(),dd=T.map(t=>dist(v,t[3]));
+ const r=T.map((t,k)=>({t,p:Math.max(0,Math.round(100*(1-dd[k]/4.5)))})).sort((a,b)=>b.p-a.p);
+ const A=r[0].t,sa=stem(A[0]);let B=null,bw=.3,bd=99;
+ T.forEach(t=>{if(stem(t[0])===sa)return;const u=t[3].map((x,k)=>x-A[3][k]);let w=u.reduce((a,x,k)=>a+x*(v[k]-A[3][k]),0)/(u.reduce((a,x)=>a+x*x,0)||1);w=Math.min(.5,Math.max(.15,w));const d=dist(v,A[3].map((x,k)=>x+w*u[k]));if(d<bd){bd=d;B=t;bw=w}});
+ const hn=cap(sa)+stem(B[0])+'dere',fit=Math.max(0,Math.round(100*(1-bd/4.5)));
+ const ax=v.map((x,k)=>[Math.abs(x),k,x]).sort((a,b)=>b[0]-a[0]);
+ const top=ax.slice(0,3).filter(a=>a[0]>.15).map(a=>PH[a[1]][a[2]>0?0:1]);
+ const j=top.length>2?top[0]+', '+top[1]+', and '+top[2]:top.join(' and ');
+ const desc=top.length?'Someone who '+j+'.':'Someone beautifully balanced on every axis.';
+ const unch=r[0].p<55,unc=cap(SS[ax[0][1]][ax[0][2]>0?0:1])+SS[ax[1][1]][ax[1][2]>0?0:1]+'dere';
+ const cat={};r.forEach(x=>[...x.t[4]].forEach(c=>{if(!(c in cat))cat[c]=x.p}));
+ const cr=Object.entries(cat).sort((a,b)=>b[1]-a[1]);
+ const split=cr[0][1]-cr[1][1]<=4,nc=CN[cr[0][0]]+'–'+CN[cr[1][0]];
+ const c=160,R=125,px=e=>c+e*R,py=w=>c-w*R;
+ let svg=`<svg viewBox="0 0 320 320" role="img" aria-label="Dere compass"><circle cx="160" cy="160" r="125" fill="none" stroke="var(--line)"/><circle cx="160" cy="160" r="62" fill="none" stroke="var(--line)"/><line x1="25" y1="160" x2="295" y2="160" stroke="var(--line)"/><line x1="160" y1="25" x2="160" y2="295" stroke="var(--line)"/>
+ <g fill="var(--mute)" font-size="10" text-anchor="middle"><text x="160" y="14">WARM</text><text x="160" y="316">COLD</text><text x="14" y="163">RESERVED</text><text x="306" y="163">EXPRESSIVE</text></g>`;
+ T.forEach(t=>{if(t!==A&&t!==B)svg+=`<circle cx="${px(t[3][0])}" cy="${py(t[3][1])}" r="2.5" fill="var(--mute)" opacity=".4"/>`});
+ [[A,'var(--acc)'],[B,'var(--acc2)']].forEach(([t,f])=>{svg+=`<circle cx="${px(t[3][0])}" cy="${py(t[3][1])}" r="5" fill="${f}"/><text x="${px(t[3][0])}" y="${py(t[3][1])-8}" font-size="9" text-anchor="middle" fill="var(--ink)">${t[0].split(' ')[0]}</text>`});
+ svg+=`<circle cx="${px(v[0])}" cy="${py(v[1])}" r="9" fill="none" stroke="var(--acc2)" stroke-width="2.5"/><circle cx="${px(v[0])}" cy="${py(v[1])}" r="3" fill="var(--acc2)"/><text x="${px(v[0])+13}" y="${py(v[1])+4}" font-size="11" font-weight="700" fill="var(--acc2)">YOU</text></svg>`;
+ const bars=v.map((x,k)=>`<span>${AX[k]}</span><div class="t"><b style="left:${(x+1)/2*100}%"></b></div>`).join('');
+ const sub=unch?`No official type fits you (best match only ${r[0].p}%), so this one is brand new. Nearest relatives: ${A[0]} + ${B[0]}.`:`${fit}% fit · ${Math.round((1-bw)*100)}% ${A[0]} + ${Math.round(bw*100)}% ${B[0]}`;
+ app.innerHTML=`<h1>Your Dere Type</h1><div class="card"><p class="tag">${unch?'Uncharted · a brand-new type':'Custom type, built for you'}</p><p class="big">${unch?unc:hn}</p><p>${desc}</p><p style="color:var(--mute)">${sub}</p></div>
+ <div class="card"><p class="tag">Closest official type · ${r[0].p}% match</p><p class="big" style="font-size:24px">${A[0]}</p><p>${esc(A[2])}</p><details><summary>The other half: ${B[0]}</summary><p>${esc(B[2])}</p></details></div>
+ <div class="card"><b>Your categories</b>${cr.map(([k,p],i)=>`<div class="run"><span${i<(split?2:1)?' style="font-weight:700"':''}>${CN[k]}</span><span style="color:var(--mute)">${p}%</span></div>`).join('')}
+ ${split?`<p class="tag" style="margin-top:12px">50/50 alert: new category discovered</p><p class="big" style="font-size:22px">${nc} Dere Types</p><p>For people who ${CD[cr[0][0]]} and also ${CD[cr[1][0]]}. You sit exactly between the two, so no existing category holds you.</p>`:''}</div>
+ <div class="card">${svg}<div class="ax">${bars}</div><div class="meta"><span>${LO.join(' · ')}</span></div><div class="meta"><span>${HI.join(' · ')}</span></div></div>
+ <div class="card"><b>Next closest</b>${r.slice(1,6).map(x=>`<div class="run"><span>${x.t[0]}</span><span style="color:var(--mute)">${x.p}%</span></div>`).join('')}</div>
+ <button class="go" onclick="start()">Retake</button>`}
+render();
+</script></body></html>
